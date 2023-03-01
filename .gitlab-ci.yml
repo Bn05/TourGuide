@@ -34,3 +34,8 @@ test:
     paths:
       - build
       - .gradle
+  artifacts:
+    when: always
+    paths:
+      - ./build/jacocoHtml
+    expire_in: 30min
