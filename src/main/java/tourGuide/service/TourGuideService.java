@@ -2,13 +2,7 @@ package tourGuide.service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,10 +18,11 @@ import gpsUtil.location.Attraction;
 import gpsUtil.location.Location;
 import gpsUtil.location.VisitedLocation;
 import tourGuide.helper.InternalTestHelper;
+import tourGuide.model.dto.AttractionUserDistanceDTO;
 import tourGuide.tracker.Tracker;
-import tourGuide.user.User;
-import tourGuide.user.UserPreferences;
-import tourGuide.user.UserReward;
+import tourGuide.model.User;
+import tourGuide.model.UserPreferences;
+import tourGuide.model.UserReward;
 import tripPricer.Provider;
 import tripPricer.TripPricer;
 
@@ -99,15 +94,39 @@ public class TourGuideService {
                 });
     }
 
-    public List<Attraction> getNearByAttractions(VisitedLocation visitedLocation) {
-        List<Attraction> nearbyAttractions = new ArrayList<>();
+    public List<AttractionUserDistanceDTO> getNearByAttractions(User userName) {
+
+        User user = userName;
+        VisitedLocation visitedLocation = user.getLastVisitedLocation();
+
+
+        List<AttractionUserDistanceDTO> allAttractionDistance = new ArrayList<>();
+        List<AttractionUserDistanceDTO> fiveClosestAttraction = new ArrayList<>();
+
         for (Attraction attraction : gpsUtil.getAttractions()) {
-            if (rewardsService.isWithinAttractionProximity(attraction, visitedLocation.location)) {
-                nearbyAttractions.add(attraction);
-            }
+
+            double distance = rewardsService.getDistance(visitedLocation.location, attraction);
+            int rewardPoints = rewardsService.getRewardPoints(attraction, user);
+
+            AttractionUserDistanceDTO attractionDistance = new AttractionUserDistanceDTO(
+                    attraction.attractionName,
+                    attraction.longitude,
+                    attraction.latitude,
+                    visitedLocation.location.longitude,
+                    visitedLocation.location.latitude,
+                    distance,
+                    rewardPoints);
+
+            allAttractionDistance.add(attractionDistance);
         }
 
-        return nearbyAttractions;
+        allAttractionDistance
+                .stream()
+                .sorted(Comparator.comparingDouble(AttractionUserDistanceDTO::getDistanceBetweenUserAttraction))
+                .limit(5)
+                .forEach(fiveClosestAttraction::add);
+
+        return fiveClosestAttraction;
     }
 
     public void updateUserPreferences(String userName, UserPreferences userPreferences) {
