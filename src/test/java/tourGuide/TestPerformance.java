@@ -1,5 +1,6 @@
 package tourGuide;
 
+import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertTrue;
 
 import java.util.*;
@@ -80,14 +81,13 @@ public class TestPerformance {
         assertTrue(TimeUnit.MINUTES.toSeconds(15) >= TimeUnit.MILLISECONDS.toSeconds(stopWatch.getTime()));
     }
 
-    @Ignore
     @Test
-    public void highVolumeGetRewards() {
+    public void highVolumeGetRewards() throws InterruptedException {
         GpsUtil gpsUtil = new GpsUtil();
         RewardsService rewardsService = new RewardsService(gpsUtil, new RewardCentral());
 
         // Users should be incremented up to 100,000, and test finishes within 20 minutes
-        InternalTestHelper.setInternalUserNumber(100);
+        InternalTestHelper.setInternalUserNumber(1000);
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         TourGuideService tourGuideService = new TourGuideService(gpsUtil, rewardsService);
@@ -100,8 +100,18 @@ public class TestPerformance {
         allUsers.forEach(u -> rewardsService.calculateRewards(u));
 
         for (User user : allUsers) {
-            assertTrue(user.getUserRewards().size() > 0);
+            boolean terminate = false;
+            while (!terminate) {
+                if (user.getUserRewards().size() > 0) {
+                    assertTrue(user.getUserRewards().size() > 0);
+                    terminate = true;
+                } else {
+
+                    sleep(100);
+                }
+            }
         }
+
         stopWatch.stop();
         tourGuideService.tracker.stopTracking();
 
