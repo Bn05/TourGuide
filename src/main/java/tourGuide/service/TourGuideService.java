@@ -134,6 +134,22 @@ public class TourGuideService {
         user.setUserPreferences(userPreferences);
     }
 
+    public Map<UUID, Location> getAllCurrentLocations() {
+
+        List<User> userList = getAllUsers();
+        Map<UUID, Location> allCurrentLocations = new HashMap<>();
+
+        for (User user : userList) {
+
+            Location location = user.getLastVisitedLocation().location;
+            UUID uuid = user.getUserId();
+
+            allCurrentLocations.put(uuid, location);
+        }
+
+        return allCurrentLocations;
+    }
+
     private void addShutDownHook() {
         Runtime.getRuntime().addShutdownHook(new Thread() {
             public void run() {
