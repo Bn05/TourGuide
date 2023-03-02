@@ -24,6 +24,11 @@ build:
     paths:
       - build
       - .gradle
+    artifacts:
+      when: on_success
+      paths:
+        - ./build/libs
+      expire_in: 30 days
 
 test:
   stage: test
